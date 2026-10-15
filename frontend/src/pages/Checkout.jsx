@@ -2,7 +2,22 @@ import { useState, useEffect, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import CartContext from "../context/CartContext";
 import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 import api from "../services/api";
+import { 
+  ShieldCheck, 
+  Lock, 
+  MapPin, 
+  User, 
+  Phone, 
+  Home as HomeIcon, 
+  Building, 
+  Compass, 
+  CheckCircle2, 
+  ArrowRight,
+  ChevronRight,
+  ShoppingBag
+} from "lucide-react";
 
 const formatPrice = (value) =>
   `₹${Number(value || 0).toLocaleString("en-IN")}`;
@@ -174,13 +189,13 @@ function Checkout() {
         return;
       }
 
-      // Step 10: Open Razorpay Checkout
+      // Open Razorpay Checkout
       const options = {
         key: data.key,
         amount: data.amount,
         currency: data.currency || "INR",
         name: "ShopKart",
-        description: "ShopKart Order",
+        description: "ShopKart Order Payment",
         order_id: data.razorpayOrderId,
 
         handler: async function (paymentResponse) {
@@ -188,7 +203,7 @@ function Checkout() {
             setIsSubmitting(true);
             setSubmitError("");
 
-            // Step 11: Call Payment Verification API
+            // Call Payment Verification API
             const verifyRes = await api.post("/orders/verify-payment", {
               shopKartOrderId: data.shopKartOrderId,
               razorpay_order_id: paymentResponse.razorpay_order_id,
@@ -223,11 +238,11 @@ function Checkout() {
 
         prefill: {
           name: formData.fullName.trim(),
-          contact: cleanPhone,
+          contact: cleanPhone ? (cleanPhone.startsWith("+") ? cleanPhone : `+91${cleanPhone}`) : "",
         },
 
         theme: {
-          color: "#111827",
+          color: "#ea580c", // Vibrant brand orange
         },
       };
 
@@ -254,334 +269,358 @@ function Checkout() {
   };
 
   return (
-    <>
+    <div className="min-h-screen bg-slate-50 flex flex-col">
       <Navbar />
-      <main className="min-h-screen bg-gray-100 px-4 py-8 sm:px-6">
-        <div className="max-w-2xl mx-auto">
-          {/* Card Container */}
-          <div className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
-            {/* Header */}
-            <div className="px-6 py-5 border-b border-gray-200">
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">
-                Checkout
-              </h1>
+
+      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+        
+        {/* Checkout Steps Header */}
+        <div className="max-w-2xl mx-auto mb-8">
+          <div className="flex items-center justify-between text-xs sm:text-sm font-bold">
+            <Link to="/cart" className="flex items-center gap-2 text-emerald-600 hover:underline">
+              <span className="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs">
+                ✓
+              </span>
+              <span>Cart</span>
+            </Link>
+            <div className="h-0.5 w-12 sm:w-20 bg-orange-500" />
+            <div className="flex items-center gap-2 text-orange-600">
+              <span className="w-6 h-6 rounded-full bg-orange-600 text-white flex items-center justify-center text-xs">
+                2
+              </span>
+              <span>Shipping & Address</span>
             </div>
+            <div className="h-0.5 w-12 sm:w-20 bg-slate-200" />
+            <div className="flex items-center gap-2 text-slate-400">
+              <span className="w-6 h-6 rounded-full bg-slate-200 text-slate-600 flex items-center justify-center text-xs">
+                3
+              </span>
+              <span>Razorpay Payment</span>
+            </div>
+          </div>
+        </div>
 
-            {orderPlaced ? (
-              <div className="p-8 text-center">
-                <div className="text-5xl mb-4">✅</div>
-                <h2 className="text-2xl font-bold text-gray-800">
-                  Order Placed Successfully
-                </h2>
-                <div className="mt-4 p-4 bg-gray-50 rounded-lg text-left max-w-md mx-auto space-y-2 text-sm text-gray-700">
-                  <p>
-                    <span className="font-semibold">Order ID:</span>{" "}
-                    {confirmedOrder?._id || "Order confirmed"}
-                  </p>
-                  <p>
-                    <span className="font-semibold">Total:</span>{" "}
-                    {formatPrice(confirmedOrder?.totalAmount || totalAmount)}
-                  </p>
-                  <p>
-                    <span className="font-semibold">Status:</span>{" "}
-                    <span className="text-green-600 font-bold">
-                      {confirmedOrder?.status || "PLACED"}
-                    </span>
-                  </p>
-                </div>
-                <p className="text-gray-600 mt-4">
-                  Your order has been verified and saved successfully.
+        {orderPlaced ? (
+          /* Placed State Fallback */
+          <div className="bg-white rounded-3xl p-10 border border-slate-200 max-w-lg mx-auto text-center shadow-lg">
+            <div className="w-20 h-20 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-4">
+              <CheckCircle2 className="w-10 h-10" />
+            </div>
+            <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+              Order Placed Successfully!
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-500 mt-2">
+              Order ID: <span className="font-mono font-bold text-slate-800">{confirmedOrder?._id}</span>
+            </p>
+            <div className="mt-6 flex justify-center gap-3">
+              <Link
+                to="/orders"
+                className="bg-slate-900 hover:bg-orange-600 text-white font-bold px-6 py-3 rounded-xl text-xs transition"
+              >
+                View Orders
+              </Link>
+              <Link
+                to="/products"
+                className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-6 py-3 rounded-xl text-xs transition"
+              >
+                Continue Shopping
+              </Link>
+            </div>
+          </div>
+        ) : (
+          /* Main 2-Column Checkout Layout */
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            {/* Left Column: Delivery Address Form */}
+            <div className="lg:col-span-7 bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 sm:p-8">
+              
+              <div className="pb-4 border-b border-slate-200 mb-6">
+                <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                  <MapPin className="w-6 h-6 text-orange-600" />
+                  <span>Delivery Address</span>
+                </h1>
+                <p className="text-xs text-slate-500 mt-1">
+                  Please provide your accurate delivery details for swift doorstep delivery.
                 </p>
-                <div className="mt-6 flex flex-wrap justify-center gap-4">
-                  <Link
-                    to="/products"
-                    className="bg-gray-800 text-white px-6 py-2.5 rounded-lg hover:bg-gray-900 transition"
-                  >
-                    Continue Shopping
-                  </Link>
-                </div>
               </div>
-            ) : (
-              <form onSubmit={handleSubmit} noValidate>
-                {/* Global / Form-level error display */}
-                {Object.keys(errors).length > 0 && (
-                  <div className="m-6 p-4 rounded-lg bg-red-50 border border-red-200 text-red-700">
-                    <p className="font-semibold text-sm">
-                      Please correct the following errors:
-                    </p>
-                    <ul className="list-disc list-inside mt-1 text-sm space-y-0.5">
-                      {Object.values(errors).map((err, idx) => (
-                        <li key={idx}>{err}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
 
-                {submitError && (
-                  <div className="m-6 p-4 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-sm">
-                    {submitError}
-                  </div>
-                )}
+              {submitError && (
+                <div className="mb-6 p-4 rounded-xl bg-rose-50 border border-rose-200 text-xs font-bold text-rose-700">
+                  {submitError}
+                </div>
+              )}
 
-                {/* Shipping Details Section */}
-                <div className="p-6 border-b border-gray-200">
-                  <h2 className="text-xl font-semibold text-gray-800 mb-6">
-                    Shipping Details
-                  </h2>
-
-                  <div className="space-y-4">
-                    {/* Full Name */}
-                    <div>
-                      <div className="sm:grid sm:grid-cols-[140px_1fr] sm:items-center gap-4">
-                        <label
-                          htmlFor="fullName"
-                          className="block text-sm sm:text-base font-medium text-gray-700 mb-1 sm:mb-0"
-                        >
-                          Full Name
-                        </label>
-                        <input
-                          type="text"
-                          id="fullName"
-                          name="fullName"
-                          value={formData.fullName}
-                          onChange={handleChange}
-                          placeholder="Full Name"
-                          className={`w-full px-3.5 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-800 transition ${
-                            errors.fullName
-                              ? "border-red-500 bg-red-50"
-                              : "border-gray-300"
-                          }`}
-                        />
-                      </div>
-                      {errors.fullName && (
-                        <div className="sm:grid sm:grid-cols-[140px_1fr] gap-4 mt-1">
-                          <div className="hidden sm:block"></div>
-                          <p className="text-sm text-red-600">
-                            {errors.fullName}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Phone */}
-                    <div>
-                      <div className="sm:grid sm:grid-cols-[140px_1fr] sm:items-center gap-4">
-                        <label
-                          htmlFor="phone"
-                          className="block text-sm sm:text-base font-medium text-gray-700 mb-1 sm:mb-0"
-                        >
-                          Phone
-                        </label>
-                        <input
-                          type="tel"
-                          id="phone"
-                          name="phone"
-                          value={formData.phone}
-                          onChange={handleChange}
-                          placeholder="Phone"
-                          className={`w-full px-3.5 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-800 transition ${
-                            errors.phone
-                              ? "border-red-500 bg-red-50"
-                              : "border-gray-300"
-                          }`}
-                        />
-                      </div>
-                      {errors.phone && (
-                        <div className="sm:grid sm:grid-cols-[140px_1fr] gap-4 mt-1">
-                          <div className="hidden sm:block"></div>
-                          <p className="text-sm text-red-600">{errors.phone}</p>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Address */}
-                    <div>
-                      <div className="sm:grid sm:grid-cols-[140px_1fr] sm:items-center gap-4">
-                        <label
-                          htmlFor="address"
-                          className="block text-sm sm:text-base font-medium text-gray-700 mb-1 sm:mb-0"
-                        >
-                          Address
-                        </label>
-                        <input
-                          type="text"
-                          id="address"
-                          name="address"
-                          value={formData.address}
-                          onChange={handleChange}
-                          placeholder="Address"
-                          className={`w-full px-3.5 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-800 transition ${
-                            errors.address
-                              ? "border-red-500 bg-red-50"
-                              : "border-gray-300"
-                          }`}
-                        />
-                      </div>
-                      {errors.address && (
-                        <div className="sm:grid sm:grid-cols-[140px_1fr] gap-4 mt-1">
-                          <div className="hidden sm:block"></div>
-                          <p className="text-sm text-red-600">
-                            {errors.address}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* City */}
-                    <div>
-                      <div className="sm:grid sm:grid-cols-[140px_1fr] sm:items-center gap-4">
-                        <label
-                          htmlFor="city"
-                          className="block text-sm sm:text-base font-medium text-gray-700 mb-1 sm:mb-0"
-                        >
-                          City
-                        </label>
-                        <input
-                          type="text"
-                          id="city"
-                          name="city"
-                          value={formData.city}
-                          onChange={handleChange}
-                          placeholder="City"
-                          className={`w-full px-3.5 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-800 transition ${
-                            errors.city
-                              ? "border-red-500 bg-red-50"
-                              : "border-gray-300"
-                          }`}
-                        />
-                      </div>
-                      {errors.city && (
-                        <div className="sm:grid sm:grid-cols-[140px_1fr] gap-4 mt-1">
-                          <div className="hidden sm:block"></div>
-                          <p className="text-sm text-red-600">{errors.city}</p>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* State */}
-                    <div>
-                      <div className="sm:grid sm:grid-cols-[140px_1fr] sm:items-center gap-4">
-                        <label
-                          htmlFor="state"
-                          className="block text-sm sm:text-base font-medium text-gray-700 mb-1 sm:mb-0"
-                        >
-                          State
-                        </label>
-                        <input
-                          type="text"
-                          id="state"
-                          name="state"
-                          value={formData.state}
-                          onChange={handleChange}
-                          placeholder="State"
-                          className={`w-full px-3.5 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-800 transition ${
-                            errors.state
-                              ? "border-red-500 bg-red-50"
-                              : "border-gray-300"
-                          }`}
-                        />
-                      </div>
-                      {errors.state && (
-                        <div className="sm:grid sm:grid-cols-[140px_1fr] gap-4 mt-1">
-                          <div className="hidden sm:block"></div>
-                          <p className="text-sm text-red-600">{errors.state}</p>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Pincode */}
-                    <div>
-                      <div className="sm:grid sm:grid-cols-[140px_1fr] sm:items-center gap-4">
-                        <label
-                          htmlFor="pincode"
-                          className="block text-sm sm:text-base font-medium text-gray-700 mb-1 sm:mb-0"
-                        >
-                          Pincode
-                        </label>
-                        <input
-                          type="text"
-                          id="pincode"
-                          name="pincode"
-                          value={formData.pincode}
-                          onChange={handleChange}
-                          placeholder="Pincode"
-                          className={`w-full px-3.5 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-800 transition ${
-                            errors.pincode
-                              ? "border-red-500 bg-red-50"
-                              : "border-gray-300"
-                          }`}
-                        />
-                      </div>
-                      {errors.pincode && (
-                        <div className="sm:grid sm:grid-cols-[140px_1fr] gap-4 mt-1">
-                          <div className="hidden sm:block"></div>
-                          <p className="text-sm text-red-600">
-                            {errors.pincode}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+              <form onSubmit={handleSubmit} noValidate className="space-y-4">
+                
+                {/* Full Name */}
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 flex items-center gap-1.5">
+                    <User className="w-3.5 h-3.5 text-slate-400" />
+                    <span>Full Name *</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="fullName"
+                    name="fullName"
+                    value={formData.fullName}
+                    onChange={handleChange}
+                    placeholder="Enter your full name"
+                    className={`w-full bg-slate-50 focus:bg-white text-sm px-4 py-3 rounded-xl border outline-none transition ${
+                      errors.fullName
+                        ? "border-rose-400 bg-rose-50/50"
+                        : "border-slate-200 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10"
+                    }`}
+                  />
+                  {errors.fullName && (
+                    <p className="text-xs font-semibold text-rose-600 mt-1">{errors.fullName}</p>
+                  )}
                 </div>
 
-                {/* Order Summary Section */}
-                <div className="p-6">
-                  <h2 className="text-xl font-semibold text-gray-800 mb-6">
-                    Order Summary
-                  </h2>
+                {/* Phone */}
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 flex items-center gap-1.5">
+                    <Phone className="w-3.5 h-3.5 text-slate-400" />
+                    <span>10-Digit Mobile Number *</span>
+                  </label>
+                  <div className="flex gap-2">
+                    <span className="bg-slate-100 border border-slate-200 text-slate-600 text-xs font-mono font-bold px-3 py-3 rounded-xl flex items-center">
+                      +91
+                    </span>
+                    <input
+                      type="tel"
+                      id="phone"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      placeholder="9876543210"
+                      className={`flex-1 bg-slate-50 focus:bg-white text-sm px-4 py-3 rounded-xl border outline-none transition ${
+                        errors.phone
+                          ? "border-rose-400 bg-rose-50/50"
+                          : "border-slate-200 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10"
+                      }`}
+                    />
+                  </div>
+                  {errors.phone && (
+                    <p className="text-xs font-semibold text-rose-600 mt-1">{errors.phone}</p>
+                  )}
+                </div>
 
-                  <div className="space-y-3">
-                    {cartItems.length === 0 ? (
-                      <p className="text-gray-500 italic py-2">
-                        No items in cart.
-                      </p>
-                    ) : (
-                      cartItems.map((item) => {
-                        const product = item?.product || {};
-                        const name = product.name || item?.name || "Product";
-                        const price = Number(product.price ?? item?.price ?? 0);
-                        const quantity = Number(item?.quantity ?? 1);
-                        const itemTotal = price * quantity;
+                {/* Address */}
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 flex items-center gap-1.5">
+                    <HomeIcon className="w-3.5 h-3.5 text-slate-400" />
+                    <span>Street Address, Flat, Building *</span>
+                  </label>
+                  <input
+                    type="text"
+                    id="address"
+                    name="address"
+                    value={formData.address}
+                    onChange={handleChange}
+                    placeholder="House / Flat no, Street, Landmark"
+                    className={`w-full bg-slate-50 focus:bg-white text-sm px-4 py-3 rounded-xl border outline-none transition ${
+                      errors.address
+                        ? "border-rose-400 bg-rose-50/50"
+                        : "border-slate-200 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10"
+                    }`}
+                  />
+                  {errors.address && (
+                    <p className="text-xs font-semibold text-rose-600 mt-1">{errors.address}</p>
+                  )}
+                </div>
 
-                        return (
-                          <div
-                            key={product._id || item?._id || name}
-                            className="flex justify-between items-center text-gray-800 text-base py-1"
-                          >
-                            <span>
-                              {name} × {quantity}
-                            </span>
-                            <span className="font-semibold text-gray-900">
-                              {formatPrice(itemTotal)}
-                            </span>
-                          </div>
-                        );
-                      })
+                {/* City & State Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 flex items-center gap-1.5">
+                      <Building className="w-3.5 h-3.5 text-slate-400" />
+                      <span>City *</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="city"
+                      name="city"
+                      value={formData.city}
+                      onChange={handleChange}
+                      placeholder="e.g. Mumbai"
+                      className={`w-full bg-slate-50 focus:bg-white text-sm px-4 py-3 rounded-xl border outline-none transition ${
+                        errors.city
+                          ? "border-rose-400 bg-rose-50/50"
+                          : "border-slate-200 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10"
+                      }`}
+                    />
+                    {errors.city && (
+                      <p className="text-xs font-semibold text-rose-600 mt-1">{errors.city}</p>
                     )}
                   </div>
 
-                  <div className="border-t border-gray-200 mt-6 pt-4 flex justify-between items-center text-lg font-bold text-gray-900">
-                    <span>Total</span>
-                    <span>{formatPrice(totalAmount)}</span>
-                  </div>
-
-                  {/* Place Order Button */}
-                  <div className="mt-8 flex justify-center">
-                    <button
-                      type="submit"
-                      disabled={isSubmitting || cartItems.length === 0}
-                      className="w-full sm:w-auto sm:px-12 py-3 bg-gray-900 text-white font-semibold rounded-lg hover:bg-black transition-colors shadow disabled:opacity-50 cursor-pointer text-center"
-                    >
-                      {isSubmitting ? "Processing..." : "Place Order"}
-                    </button>
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5 flex items-center gap-1.5">
+                      <Compass className="w-3.5 h-3.5 text-slate-400" />
+                      <span>State *</span>
+                    </label>
+                    <input
+                      type="text"
+                      id="state"
+                      name="state"
+                      value={formData.state}
+                      onChange={handleChange}
+                      placeholder="e.g. Maharashtra"
+                      className={`w-full bg-slate-50 focus:bg-white text-sm px-4 py-3 rounded-xl border outline-none transition ${
+                        errors.state
+                          ? "border-rose-400 bg-rose-50/50"
+                          : "border-slate-200 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10"
+                      }`}
+                    />
+                    {errors.state && (
+                      <p className="text-xs font-semibold text-rose-600 mt-1">{errors.state}</p>
+                    )}
                   </div>
                 </div>
+
+                {/* Pincode */}
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                    Postal Code / Pincode (6-Digits) *
+                  </label>
+                  <input
+                    type="text"
+                    id="pincode"
+                    name="pincode"
+                    maxLength={6}
+                    value={formData.pincode}
+                    onChange={handleChange}
+                    placeholder="400001"
+                    className={`w-full sm:w-1/2 bg-slate-50 focus:bg-white font-mono text-sm px-4 py-3 rounded-xl border outline-none transition ${
+                      errors.pincode
+                        ? "border-rose-400 bg-rose-50/50"
+                        : "border-slate-200 focus:border-orange-500 focus:ring-4 focus:ring-orange-500/10"
+                    }`}
+                  />
+                  {errors.pincode && (
+                    <p className="text-xs font-semibold text-rose-600 mt-1">{errors.pincode}</p>
+                  )}
+                </div>
+
+                {/* Mobile Pay CTA */}
+                <div className="pt-6 border-t border-slate-100 lg:hidden">
+                  <button
+                    type="submit"
+                    disabled={isSubmitting || cartItems.length === 0}
+                    className="w-full py-4 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black text-sm flex items-center justify-center gap-2 shadow-lg transition disabled:opacity-50 cursor-pointer"
+                  >
+                    {isSubmitting ? (
+                      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <Lock className="w-4 h-4" />
+                        <span>Pay {formatPrice(totalAmount)} via Razorpay</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
               </form>
-            )}
+
+            </div>
+
+            {/* Right Column: Order Summary & Payment Guarantee */}
+            <div className="lg:col-span-5 space-y-4">
+              
+              <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-6 space-y-5">
+                
+                <h2 className="text-base font-extrabold text-slate-900 tracking-tight flex items-center justify-between pb-3 border-b border-slate-100">
+                  <span>Order Summary</span>
+                  <span className="text-xs text-slate-400 font-semibold">
+                    {cartItems.length} {cartItems.length === 1 ? "Product" : "Products"}
+                  </span>
+                </h2>
+
+                {/* Items List */}
+                <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
+                  {cartItems.map((item) => {
+                    const product = item?.product || {};
+                    const name = product.name || item?.name || "Product";
+                    const price = Number(product.price ?? item?.price ?? 0);
+                    const quantity = Number(item?.quantity ?? 1);
+                    const itemTotal = price * quantity;
+
+                    return (
+                      <div
+                        key={product._id || item?._id || name}
+                        className="flex items-center justify-between gap-3 text-xs py-1"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="font-bold text-slate-800 truncate">{name}</p>
+                          <p className="text-slate-400 mt-0.5">Qty: {quantity} × {formatPrice(price)}</p>
+                        </div>
+                        <span className="font-extrabold text-slate-900 shrink-0">
+                          {formatPrice(itemTotal)}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Bill Row */}
+                <div className="border-t border-slate-100 pt-3 space-y-2 text-xs text-slate-600">
+                  <div className="flex justify-between">
+                    <span>Items Total</span>
+                    <span className="font-bold text-slate-900">{formatPrice(totalAmount)}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>Standard Express Delivery</span>
+                    <span className="text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded text-[10px]">
+                      FREE
+                    </span>
+                  </div>
+                  <div className="border-t border-slate-200 pt-3 flex justify-between items-baseline text-slate-900">
+                    <span className="text-sm font-black">Amount Payable</span>
+                    <span className="text-xl font-black text-slate-900">{formatPrice(totalAmount)}</span>
+                  </div>
+                </div>
+
+                {/* Desktop Pay Button */}
+                <div className="hidden lg:block pt-2">
+                  <button
+                    type="button"
+                    onClick={handleSubmit}
+                    disabled={isSubmitting || cartItems.length === 0}
+                    className="w-full py-4 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-orange-500/25 transition transform hover:-translate-y-0.5 cursor-pointer disabled:opacity-50"
+                  >
+                    {isSubmitting ? (
+                      <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <>
+                        <Lock className="w-4 h-4" />
+                        <span>Pay {formatPrice(totalAmount)} with Razorpay</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* Security Trust Badge */}
+                <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-100 space-y-1.5 text-center">
+                  <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-slate-800">
+                    <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                    <span>Safe & Secure Payments</span>
+                  </div>
+                  <p className="text-[10px] text-slate-400">
+                    Payments are encrypted with 256-bit SSL via official Razorpay checkout.
+                  </p>
+                </div>
+
+              </div>
+
+            </div>
+
           </div>
-        </div>
+        )}
+
       </main>
-    </>
+
+      <Footer />
+    </div>
   );
 }
 

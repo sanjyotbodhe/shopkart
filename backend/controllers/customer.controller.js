@@ -4,73 +4,73 @@ import generateToken from "../utils/generateToken.js";
 
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-const registerCustomer = async (req,res) =>{
+const registerCustomer = async (req, res) => {
     //console.log("req recieved");
     const { fullName, email, password, phone } = req.body;
 
-    if(!fullName|| !email || !password || !phone){
-        return res.status(400).json({'error':"Missing a required field"});
+    if (!fullName || !email || !password || !phone) {
+        return res.status(400).json({ 'error': "Missing a required field" });
     }
 
-    if(!isValidEmail(email)){
-        return res.status(400).json({error:"Invalid email format"});
+    if (!isValidEmail(email)) {
+        return res.status(400).json({ error: "Invalid email format" });
     }
 
-    if(password.length<6) return res.status(400).json({'error':"Password too Short"});
+    if (password.length < 6) return res.status(400).json({ 'error': "Password too Short" });
 
-    const existing = await Customer.findOne({email});
+    const existing = await Customer.findOne({ email });
 
-    if(existing) return res.status(409).json({'error':'Email already in use'});
+    if (existing) return res.status(409).json({ 'error': 'Email already in use' });
 
-    const hashPass = await bcrypt.hash(password,10);
+    const hashPass = await bcrypt.hash(password, 10);
 
     const customer = await Customer.create({
-        name:fullName,
+        name: fullName,
         email,
-        password:hashPass,
+        password: hashPass,
         phone
     })
 
     res.status(201).json({
-        success:true,
+        success: true,
         message: "Customer registered successfully",
-        customer:{
-            id:customer._id,
-            fullName:fullName,
-            email:email,
-            phone:phone
+        customer: {
+            id: customer._id,
+            fullName: fullName,
+            email: email,
+            phone: phone
         }
     });
 }
 
-const loginCustomer = async(req,res)=>{
-    try{
-        const{email,password} = req.body;
+const loginCustomer = async (req, res) => {
+    try {
+        const { email, password } = req.body;
 
-        if(!email || !isValidEmail(email)){
-            return res.status(400).json({error:"Invalid email format"});
+        if (!email || !isValidEmail(email)) {
+            return res.status(400).json({ error: "Invalid email format" });
         }
 
-        const user = await Customer.findOne({email});
+        const user = await Customer.findOne({ email });
 
-        if(!user){
+        if (!user) {
             return res.status(401).json({
-                error:'Invalid email or password'
+                error: 'Invalid email or password'
             })
         }
 
-        const validUser = await bcrypt.compare(password,user.password);
+        const validUser = await bcrypt.compare(password, user.password);
 
-        if(!validUser){
+        if (!validUser) {
             return res.status(401).json({
-                error:'Invalid email or password'
+                error: 'Invalid email or password'
             })
         }
 
         const token = generateToken(user._id);
 
-        res.cookie('token',token,{
-            httpOnly:true
+        res.cookie('token', token, {
+            httpOnly: true
         })
 
         return res.status(200).json({
@@ -83,7 +83,7 @@ const loginCustomer = async(req,res)=>{
                 phone: user.phone
             }
         });
-    }catch(err){
+    } catch (err) {
         return res.status(500).json({
             error: "Internal server error"
         });
@@ -91,21 +91,21 @@ const loginCustomer = async(req,res)=>{
     }
 }
 
-const showCustomer = (req,res)=>{
+const showCustomer = (req, res) => {
     return res.status(200).json({
-        id:req.user._id,
-        name:req.user.name,
-        email:req.user.email,
-        phone:req.user.phone,
+        id: req.user._id,
+        name: req.user.name,
+        email: req.user.email,
+        phone: req.user.phone,
     })
 }
 
 
-const logoutCustomer = (req,res)=>{
+const logoutCustomer = (req, res) => {
     res.clearCookie('token')
     return res.status(200).json({
-        success:true,
-        message:'Logout Successfull'
+        success: true,
+        message: 'Logout Successfull'
     })
 }
-export {registerCustomer, loginCustomer,showCustomer,logoutCustomer};
+export { registerCustomer, loginCustomer, showCustomer, logoutCustomer };

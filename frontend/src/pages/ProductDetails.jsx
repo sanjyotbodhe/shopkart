@@ -4,10 +4,19 @@ import { getProduct } from "../services/api";
 import api from "../services/api";
 import CartContext from "../context/CartContext";
 import Navbar from "../components/Navbar";
+import { handleImageFallback } from "../utils/imageFallback";
+import { 
+  ShoppingBag, 
+  Heart, 
+  ArrowLeft, 
+  Check, 
+  AlertCircle,
+  PackageCheck
+} from "lucide-react";
 
 function ProductDetails() {
   const { id } = useParams();
-  const { addCart } = useContext(CartContext);
+  const { addCart } = useContext(CartContext) || {};
 
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -54,7 +63,7 @@ function ProductDetails() {
           setIsInWishlist(found);
         }
       } catch {
-        // Unauthenticated or wishlist empty, ignore
+        // Unauthenticated or wishlist empty
       }
     };
 
@@ -64,7 +73,7 @@ function ProductDetails() {
   }, [id]);
 
   const handleAddToCart = async () => {
-    if (!product || product.stock === 0) return;
+    if (!product || product.stock === 0 || !addCart) return;
 
     try {
       setAddingToCart(true);
@@ -81,7 +90,7 @@ function ProductDetails() {
         }
       } else {
         setCartSuccess(true);
-        setTimeout(() => setCartSuccess(false), 4000);
+        setTimeout(() => setCartSuccess(false), 3500);
       }
     } catch (err) {
       if (err.response?.status === 401) {
@@ -134,185 +143,185 @@ function ProductDetails() {
 
   if (loading) {
     return (
-      <>
+      <div className="min-h-screen bg-slate-50">
         <Navbar />
-        <div className="flex min-h-[80vh] items-center justify-center bg-gray-100">
-          <p className="text-lg font-medium text-gray-600">
-            Loading product details...
-          </p>
+        <div className="flex min-h-[75vh] items-center justify-center">
+          <div className="text-center space-y-2">
+            <div className="w-10 h-10 border-3 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto" />
+            <p className="text-sm font-semibold text-slate-600">Loading product details...</p>
+          </div>
         </div>
-      </>
+      </div>
     );
   }
 
-  if (error) {
+  if (error || !product) {
     return (
-      <>
+      <div className="min-h-screen bg-slate-50">
         <Navbar />
-        <div className="flex min-h-[80vh] flex-col items-center justify-center gap-4 bg-gray-100 px-6">
-          <p className="text-lg font-medium text-red-600">{error}</p>
+        <div className="flex min-h-[75vh] flex-col items-center justify-center gap-4 px-6 text-center">
+          <p className="text-base font-semibold text-rose-600">{error || "Product not found."}</p>
           <Link
             to="/products"
-            className="rounded-lg bg-gray-800 px-6 py-2.5 font-medium text-white transition hover:bg-gray-900"
+            className="rounded-xl bg-slate-900 px-6 py-2.5 font-bold text-xs text-white transition hover:bg-slate-800"
           >
             ← Back to Products
           </Link>
         </div>
-      </>
-    );
-  }
-
-  if (!product) {
-    return (
-      <>
-        <Navbar />
-        <div className="flex min-h-[80vh] flex-col items-center justify-center gap-4 bg-gray-100 px-6">
-          <p className="text-lg font-medium text-gray-600">Product not found.</p>
-          <Link
-            to="/products"
-            className="rounded-lg bg-gray-800 px-6 py-2.5 font-medium text-white transition hover:bg-gray-900"
-          >
-            ← Back to Products
-          </Link>
-        </div>
-      </>
+      </div>
     );
   }
 
   return (
-    <>
+    <div className="min-h-screen bg-slate-50 pb-16">
       <Navbar />
-      <div className="min-h-screen bg-gray-100 px-6 py-10">
-        <div className="mx-auto max-w-5xl">
-          <Link
-            to="/products"
-            className="mb-6 inline-flex items-center gap-1 font-medium text-blue-600 hover:text-blue-800 transition"
-          >
-            ← Back to Products
-          </Link>
 
-          <div className="grid overflow-hidden rounded-2xl bg-white shadow-lg md:grid-cols-2">
-            {/* Image */}
-            <div className="bg-gray-50 flex items-center justify-center p-4">
-              <img
-                src={product.image}
-                alt={product.name}
-                className="h-full max-h-125 w-full object-cover rounded-xl"
-              />
-            </div>
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+        
+        {/* Back Link */}
+        <Link
+          to="/products"
+          className="mb-6 inline-flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-orange-600 transition"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Back to Products</span>
+        </Link>
 
-            {/* Details */}
-            <div className="flex flex-col justify-center p-8">
-              <p className="mb-2 text-sm font-semibold uppercase tracking-wide text-blue-600">
-                {product.category}
-              </p>
+        {/* Product Card Container */}
+        <div className="bg-white rounded-3xl border border-slate-200/90 shadow-sm overflow-hidden grid grid-cols-1 md:grid-cols-2">
+          
+          {/* Product Image */}
+          <div className="bg-slate-100 flex items-center justify-center p-6 sm:p-10">
+            <img
+              src={product.image}
+              alt={product.name}
+              onError={(e) => handleImageFallback(e, product.category)}
+              className="w-full max-h-[460px] object-cover rounded-2xl shadow-sm"
+            />
+          </div>
 
-              <h1 className="mb-3 text-3xl sm:text-4xl font-bold text-gray-900">
-                {product.name}
-              </h1>
+          {/* Product Details Content */}
+          <div className="p-6 sm:p-10 flex flex-col justify-between">
+            
+            <div className="space-y-4">
+              
+              <div>
+                <span className="text-[11px] font-extrabold uppercase tracking-wider text-orange-600 bg-orange-50 px-2.5 py-1 rounded-md">
+                  {product.category}
+                </span>
 
-              <p className="mb-5 leading-relaxed text-gray-600 text-sm sm:text-base">
+                <h1 className="mt-2 text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                  {product.name}
+                </h1>
+              </div>
+
+              <p className="text-sm leading-relaxed text-slate-600">
                 {product.description}
               </p>
 
-              <p className="mb-3 text-3xl font-bold text-gray-900">
-                ₹{Number(product.price).toLocaleString("en-IN")}
-              </p>
-
-              <p
-                className={`mb-6 font-medium ${
-                  product.stock > 0 ? "text-green-600" : "text-red-600"
-                }`}
-              >
-                {product.stock > 0
-                  ? `${product.stock} units available`
-                  : "Out of stock"}
-              </p>
+              {/* Price & Stock */}
+              <div className="pt-2">
+                <span className="text-3xl font-black text-slate-900 block">
+                  ₹{Number(product.price).toLocaleString("en-IN")}
+                </span>
+                
+                <p className={`mt-1 text-xs font-bold ${product.stock > 0 ? "text-emerald-600" : "text-rose-600"}`}>
+                  {product.stock > 0
+                    ? `✓ ${product.stock} units left in stock`
+                    : "✕ Out of stock"}
+                </p>
+              </div>
 
               {/* Feedback Notifications */}
               {cartSuccess && (
-                <div className="mb-4 flex items-center justify-between rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-800">
-                  <span>✓ Added to your cart successfully!</span>
-                  <Link
-                    to="/cart"
-                    className="font-semibold underline hover:text-green-900 ml-2"
-                  >
+                <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-800 flex items-center justify-between font-semibold animate-fade-in">
+                  <span className="flex items-center gap-1.5">
+                    <Check className="w-4 h-4 text-emerald-600" />
+                    Added to your cart successfully!
+                  </span>
+                  <Link to="/cart" className="font-bold underline text-emerald-900 ml-2">
                     View Cart →
                   </Link>
                 </div>
               )}
 
               {cartError && (
-                <div className="mb-4 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+                <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-700 font-semibold">
                   {cartError}
                 </div>
               )}
 
               {wishlistSuccess && (
-                <div className="mb-4 rounded-lg bg-pink-50 border border-pink-200 px-4 py-3 text-sm text-pink-700">
+                <div className="p-3.5 rounded-xl bg-pink-50 border border-pink-200 text-xs text-pink-700 font-semibold">
                   {wishlistSuccess}
                 </div>
               )}
 
               {wishlistError && (
-                <div className="mb-4 rounded-lg bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800">
+                <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-800 font-semibold">
                   {wishlistError}
                 </div>
               )}
 
-              {/* Actions */}
-              <div className="flex flex-col gap-3">
-                <button
-                  type="button"
-                  onClick={handleAddToCart}
-                  disabled={product.stock === 0 || addingToCart}
-                  className="w-full rounded-lg bg-blue-600 px-6 py-3.5 font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400 shadow cursor-pointer text-center"
-                >
-                  {addingToCart
-                    ? "Adding to Cart..."
-                    : product.stock === 0
-                    ? "Out of Stock"
-                    : "Add to Cart"}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleToggleWishlist}
-                  disabled={savingWishlist}
-                  className={`w-full rounded-lg px-6 py-3 font-semibold transition border cursor-pointer ${
-                    isInWishlist
-                      ? "bg-pink-50 border-pink-500 text-pink-700 hover:bg-pink-100"
-                      : "bg-white border-pink-500 text-pink-600 hover:bg-pink-50"
-                  } disabled:opacity-60`}
-                >
-                  {savingWishlist
-                    ? "⏳ Updating Wishlist..."
-                    : isInWishlist
-                    ? "♥ In Wishlist (Click to Remove)"
-                    : "♡ Add to Wishlist"}
-                </button>
-              </div>
-
-              {/* Quick links */}
-              <div className="mt-6 flex items-center justify-between border-t border-gray-100 pt-4 text-sm text-gray-500">
-                <Link
-                  to="/cart"
-                  className="hover:text-blue-600 transition"
-                >
-                  Go to Shopping Cart
-                </Link>
-                <Link
-                  to="/wishlist"
-                  className="hover:text-pink-600 transition"
-                >
-                  View My Wishlist
-                </Link>
-              </div>
             </div>
+
+            {/* Actions: Add to Cart & Wishlist */}
+            <div className="pt-8 space-y-3">
+              
+              <button
+                type="button"
+                onClick={handleAddToCart}
+                disabled={product.stock === 0 || addingToCart}
+                className="w-full py-3.5 px-6 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-extrabold text-sm flex items-center justify-center gap-2 shadow-sm transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              >
+                {addingToCart ? (
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <ShoppingBag className="w-4 h-4" />
+                    <span>{product.stock === 0 ? "Out of Stock" : "Add to Cart"}</span>
+                  </>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleToggleWishlist}
+                disabled={savingWishlist}
+                className={`w-full py-3 px-6 rounded-xl text-xs font-bold flex items-center justify-center gap-2 border transition cursor-pointer ${
+                  isInWishlist
+                    ? "bg-pink-50 border-pink-300 text-pink-700 hover:bg-pink-100"
+                    : "bg-white border-slate-200 text-slate-700 hover:border-pink-300 hover:text-pink-600"
+                }`}
+              >
+                <Heart className={`w-4 h-4 ${isInWishlist ? "fill-pink-500 text-pink-500" : ""}`} />
+                <span>
+                  {savingWishlist
+                    ? "Updating Wishlist..."
+                    : isInWishlist
+                    ? "In Wishlist (Click to Remove)"
+                    : "Add to Wishlist"}
+                </span>
+              </button>
+
+              {/* Navigation Shortcuts */}
+              <div className="pt-4 flex items-center justify-between text-xs text-slate-500 border-t border-slate-100">
+                <Link to="/cart" className="hover:text-orange-600 transition font-medium">
+                  Go to Cart →
+                </Link>
+                <Link to="/wishlist" className="hover:text-pink-600 transition font-medium">
+                  View Wishlist →
+                </Link>
+              </div>
+
+            </div>
+
           </div>
+
         </div>
-      </div>
-    </>
+
+      </main>
+    </div>
   );
 }
 
